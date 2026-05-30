@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CurbSpace IQ | NITI Aayog Municipal Zoning & Micro-Revenue Dashboard</title>
+  
+  <!-- Tailwind CSS v4.0 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  
+  <!-- Leaflet CSS & JS CDNs -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Custom Corporate Design System -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="flex flex-col min-h-screen">
+
+  <!-- Header Bar -->
+  <header class="h-16 border-b border-[var(--border-color)] bg-[var(--bg-card)] px-6 flex justify-between items-center transition-all duration-300 z-50">
+    <div class="flex items-center gap-3">
+      <!-- Minimalist Dynamic Tech Logo -->
+      <div class="h-10 w-10 rounded-lg bg-indigo-600 flex items-center justify-center shadow-md shadow-indigo-600/30">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-xl font-extrabold tracking-tight text-[var(--text-primary)]">CurbSpace <span class="text-indigo-500">IQ</span></h1>
+        <p class="text-xs text-[var(--text-secondary)] font-medium">Urban Planners' Geospatial Interface</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-4">
+      <span class="hidden md:inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-500">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        AI Zoning Model: Online (v4.2)
+      </span>
+      <div class="h-4 w-[1px] bg-[var(--border-color)] hidden md:block"></div>
+      <div class="text-right hidden sm:block">
+        <div class="text-xs text-[var(--text-secondary)] font-semibold">TARGET NODE</div>
+        <div class="text-sm font-bold text-[var(--text-primary)]" id="active-zone-header">T. Nagar</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Dashboard Main Layout -->
+  <main class="dashboard-grid flex-grow">
+    
+    <!-- Left Sidebar Control Panel -->
+    <aside class="sidebar-panel">
+      <!-- Section: Navigation Node -->
+      <div>
+        <label for="junction-selector" class="block text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">Target Municipal Zone</label>
+        <select id="junction-selector" class="form-select w-full font-semibold">
+          <!-- Populated dynamically by script.js -->
+        </select>
+      </div>
+
+      <hr class="border-[var(--border-color)]">
+
+      <!-- Section: Time of Day Slider -->
+      <div class="slider-container">
+        <div class="flex justify-between items-center mb-1">
+          <label class="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">Simulated Timeframe</label>
+          <span class="text-xs font-bold text-indigo-400 bg-indigo-500/15 px-2 py-0.5 rounded" id="timeframe-badge">Morning Rush</span>
+        </div>
+        <input type="range" min="0" max="2" value="0" class="time-slider" id="time-slider">
+        <div class="time-labels">
+          <span>Morning Rush</span>
+          <span>Afternoon Lull</span>
+          <span>Evening Peak</span>
+        </div>
+      </div>
+
+      <hr class="border-[var(--border-color)]">
+
+      <!-- Section: Operational Toggles -->
+      <div class="flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm font-bold text-[var(--text-primary)]">Zoning Violations</div>
+            <div class="text-xs text-[var(--text-secondary)]">Isolate compliance alerts only</div>
+          </div>
+          <label class="switch-label">
+            <input type="checkbox" class="switch-input" id="violation-toggle">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm font-bold text-[var(--text-primary)]">Light Mode Toggle</div>
+            <div class="text-xs text-[var(--text-secondary)]">Switch UI color themes</div>
+          </div>
+          <label class="switch-label">
+            <input type="checkbox" class="switch-input" id="theme-toggle">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <hr class="border-[var(--border-color)]">
+
+      <!-- GCC AI Zoning Proposal Evaluator -->
+      <div class="flex flex-col gap-3">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-400">AI Proposal Evaluator</h4>
+        <p class="text-[11px] text-[var(--text-secondary)] leading-relaxed">Evaluate if a proposed vendor placement is acceptable under GCC zoning guidelines.</p>
+        
+        <div class="flex flex-col gap-2">
+          <select id="eval-vendor-type" class="form-select w-full">
+            <option value="Food Joint">Food Joint (Idli/Dosa Carts)</option>
+            <option value="Apparel">Apparel (Sari/Retail Stalls)</option>
+            <option value="Artisan Craft">Artisan Craft (Hand-loom Sari Tables)</option>
+            <option value="Coffee/Newspaper Stand">Coffee/Filter Coffee Stands</option>
+          </select>
+          
+          <select id="eval-zone" class="form-select w-full">
+            <option value="1">T. Nagar (Pondy Bazaar)</option>
+            <option value="2">Thiruvanmiyur (Beach Road)</option>
+            <option value="3">Parrys Corner (Broadway)</option>
+          </select>
+          
+          <select id="eval-location" class="form-select w-full">
+            <option value="plaza">Back Alley / Open Plaza</option>
+            <option value="pathway">Main Pedestrian Pathway</option>
+            <option value="crosswalk">Corner Near Crosswalk / Ramp</option>
+            <option value="hydrant">Within 10ft of Fire Hydrant</option>
+          </select>
+          
+          <select id="eval-time" class="form-select w-full">
+            <option value="morning">Morning Rush</option>
+            <option value="afternoon">Afternoon Lull</option>
+            <option value="evening">Evening Peak</option>
+          </select>
+          
+          <button id="btn-evaluate" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded text-xs uppercase tracking-wider transition-colors cursor-pointer">
+            Evaluate Zoning Request
+          </button>
+        </div>
+        
+        <!-- Dynamic Evaluation Result Box -->
+        <div id="eval-result-container" class="hidden mt-1 p-3 rounded border text-xs leading-normal font-semibold">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <hr class="border-[var(--border-color)]">
+
+      <!-- Environmental Quick Stats -->
+      <div class="mt-auto card-premium border-indigo-500/20 bg-indigo-500/5">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-2">Micro-Climate Engine</h4>
+        <p class="text-xs text-[var(--text-secondary)] mb-3 leading-relaxed">Pitches dynamically capture physical parameters like solar yield spots and air alerts for optimization.</p>
+        <div class="flex gap-2">
+          <span class="flex-grow flex items-center justify-center gap-1.5 px-2.5 py-1 text-[10px] font-bold rounded border border-amber-500/30 bg-amber-500/10 text-amber-500">
+            ☀️ Solar Active
+          </span>
+          <span class="flex-grow flex items-center justify-center gap-1.5 px-2.5 py-1 text-[10px] font-bold rounded border border-rose-500/30 bg-rose-500/10 text-rose-500">
+            💨 AQI Monitor
+          </span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right-Hand Primary Dashboard Panel -->
+    <div class="flex flex-col flex-grow min-h-0 overflow-y-auto p-6 gap-6">
+      
+      <!-- Top Summary Metric Ribbon -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full shrink-0">
+        
+        <!-- Metric Card 1: Traffic Index -->
+        <article class="card-premium flex flex-col justify-between min-h-[105px]">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">Traffic Index</h3>
+            <span class="text-indigo-400 text-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </span>
+          </div>
+          <div>
+            <div class="text-2xl font-extrabold text-[var(--text-primary)]" id="metric-traffic-index">0</div>
+            <div class="text-xs font-semibold text-indigo-400" id="metric-traffic-status">Normal Density</div>
+          </div>
+        </article>
+
+        <!-- Metric Card 2: Active Vendor Capacity Ratio -->
+        <article class="card-premium flex flex-col justify-between min-h-[105px]">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">Capacity Ratio</h3>
+            <span class="text-sky-400 text-lg" id="metric-capacity-text">0 / 0</span>
+          </div>
+          <div>
+            <div class="text-2xl font-extrabold text-[var(--text-primary)] mb-2" id="metric-capacity-pct">0%</div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="metric-capacity-progress" style="width: 0%"></div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Metric Card 3: Live Hourly Micro-GDP -->
+        <article class="card-premium flex flex-col justify-between min-h-[105px]">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">Live Micro-GDP</h3>
+            <span class="text-emerald-500 text-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </span>
+          </div>
+          <div>
+            <div class="text-2xl font-extrabold text-[var(--text-primary)]" id="metric-microgdp">$0.00</div>
+            <div class="text-xs font-semibold text-emerald-400">Total Live Hourly Yield</div>
+          </div>
+        </article>
+
+        <!-- Metric Card 4: Active AI Zoning Alerts -->
+        <article class="card-premium flex flex-col justify-between min-h-[105px]" id="alert-card-container">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">Zoning Warnings</h3>
+            <span class="text-rose-500 text-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </span>
+          </div>
+          <div>
+            <div class="text-2xl font-extrabold text-[var(--text-primary)]" id="metric-zoning-alerts">0 Alerts</div>
+            <div class="text-xs font-semibold text-rose-400" id="metric-zoning-status">Compliance Maintained</div>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- Mid-Section Workspace Grid -->
+      <section class="grid grid-cols-1 xl:grid-cols-3 gap-6 shrink-0">
+        
+        <!-- Left: Map Container (Leaflet) -->
+        <div class="xl:col-span-2 card-premium flex flex-col h-[480px]">
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <h2 class="text-sm font-bold text-[var(--text-primary)]">Interactive Geospatial Zoning Map</h2>
+              <p class="text-xs text-[var(--text-secondary)]">Click markers to review localized pedestrian bottlenecks & historical micro-revenue trends</p>
+            </div>
+            <div class="flex gap-2 text-xs">
+              <span class="flex items-center gap-1.5 font-semibold text-[var(--text-secondary)]">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#10B981]"></span> Permitted
+              </span>
+              <span class="flex items-center gap-1.5 font-semibold text-[var(--text-secondary)]">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#0EA5E9]"></span> Available
+              </span>
+              <span class="flex items-center gap-1.5 font-semibold text-[var(--text-secondary)]">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#EF4444] animate-pulse"></span> Violation
+              </span>
+            </div>
+          </div>
+          <div class="flex-grow min-h-0 relative">
+            <div id="map"></div>
+          </div>
+        </div>
+
+        <!-- Right: Operations Log Terminal -->
+        <div class="card-premium h-[480px]">
+          <div class="terminal-container">
+            <div class="terminal-header">
+              <div>
+                <h2 class="text-sm font-bold text-[var(--text-primary)]">Municipal Operations Terminal</h2>
+                <p class="text-xs text-[var(--text-secondary)]">Real-time system telemetry and compliance reports</p>
+              </div>
+              <button id="clear-terminal" class="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-wider">
+                Clear Log
+              </button>
+            </div>
+            <div class="terminal-log-wrapper flex-grow" id="operations-terminal">
+              <!-- Logs appended dynamically -->
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Bottom Analytics Data Grid -->
+      <section class="card-premium flex flex-col gap-4 w-full shrink-0 min-h-[380px]">
+        
+        <!-- Table Search & Filter Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-sm font-bold text-[var(--text-primary)]">Pitch Inventory & Spatial Revenue Ledger</h2>
+            <p class="text-xs text-[var(--text-secondary)]">Click column headers to sort by ID or current hourly revenue stream</p>
+          </div>
+          
+          <div class="flex flex-wrap items-center gap-3">
+            <!-- Text Search Input -->
+            <div class="relative w-full sm:w-60">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--text-secondary)]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </span>
+              <input type="text" id="pitch-search" class="form-input w-full pl-9" placeholder="Search by ID, Vendor Name...">
+            </div>
+
+            <!-- Dropdown Filter for Category -->
+            <select id="vendor-type-filter" class="form-select w-full sm:w-48">
+              <option value="All">All Categories</option>
+              <option value="Food Joint">Food Joint</option>
+              <option value="Apparel">Apparel</option>
+              <option value="Artisan Craft">Artisan Craft</option>
+              <option value="Coffee/Newspaper Stand">Coffee/Newspaper Stand</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Table Workspace -->
+        <div class="data-table-wrapper">
+          <table class="custom-table" id="pitch-table">
+            <thead>
+              <tr>
+                <th class="sortable" data-sort="pitchID">
+                  Pitch ID <span class="sort-icon" id="sort-icon-pitchID">⇅</span>
+                </th>
+                <th>Vendor Details</th>
+                <th>Category</th>
+                <th>Zoning Status</th>
+                <th class="text-center">Climate Overlays</th>
+                <th class="sortable text-right" data-sort="revenue">
+                  Live Hourly Revenue <span class="sort-icon" id="sort-icon-revenue">⇅</span>
+                </th>
+                <th class="text-right">Compliance Action</th>
+              </tr>
+            </thead>
+            <tbody id="table-body">
+              <!-- Populated dynamically by script.js -->
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Table Pagination/Record Summary Info -->
+        <div class="flex items-center justify-between text-xs text-[var(--text-secondary)] font-semibold px-2">
+          <div id="table-records-summary">Showing 6 of 6 pitches</div>
+          <div>CurbSpace IQ System v4.2</div>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Script initialization -->
+  <script src="script.js"></script>
+</body>
+</html>

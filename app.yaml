@@ -1,9 +1,6 @@
 # CurbSpace IQ App Engine Static Hosting Configuration
 runtime: python39
 
-# Enforce secure HTTPS connections
-secure: always
-
 handlers:
 # Main route: Serve index.html
 - url: /

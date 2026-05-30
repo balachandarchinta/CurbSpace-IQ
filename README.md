@@ -1,6 +1,6 @@
-# CurbSpace IQ | NITI Aayog Municipal Zoning & Micro-Revenue Dashboard
+# CurbSpace IQ | Municipal Zoning & Micro-Revenue Dashboard
 
-**CurbSpace IQ** is a flawless, production-grade pilot prototype designed for municipal urban planners. Built to comply with flat, data-dense **NITI Aayog Design Standards**, this dashboard enables the Greater Chennai Corporation (GCC) to manage street vendor placements, perform automated AI zoning compliance, and visualize micro-revenues in real-time.
+**CurbSpace IQ** is a flawless, production-grade pilot prototype designed for municipal urban planners. This dashboard enables the Greater Chennai Corporation (GCC) to manage street vendor placements, perform automated AI zoning compliance, and visualize micro-revenues in real-time.
 
 ---
 
